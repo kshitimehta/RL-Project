@@ -1,0 +1,115 @@
+from rl687.evaluate import Evaluate
+from rl687.evaluate_cartpole import EvaluateCartpole
+from rl687.agents.cem import CEM
+from rl687.agents.fchc import FCHC
+from rl687.agents.ga import GA
+
+import matplotlib.pyplot as plt
+
+from rl687.environments.cartpole import Cartpole
+#from rl687 import evaluate 
+
+
+import numpy as np
+
+# import utils
+from datetime import datetime
+# datetime object containing current date and time
+
+np.random.seed(333)
+
+def problem1():
+    
+    print("cem-gridworld-tabular_softmax")
+    
+    theta = np.zeros(100) 
+    sigma = 1
+    popSize = 10
+    numElite = 3
+    numEpisodes = 10
+    evaluate = Evaluate()
+    epsilon = 5
+    
+    cem = CEM(theta,sigma, popSize, numElite, numEpisodes,evaluate,epsilon)
+    
+    numTrials = 50
+    numIterations = 250
+    total_episodes = numIterations*numEpisodes*popSize # 20*50*10
+    
+    results = np.zeros((numTrials,total_episodes))
+    
+    for trial in range(numTrials):
+        cem.reset()
+        for i in range(numIterations):
+            #DEBUG
+            if (i%5 == 0):
+                print("cem: ","trial: ",trial,"/",numTrials," iteration: ",i,"/",numIterations)
+            cem.train()
+            
+            batch_start = (i*numEpisodes)*popSize
+            batch_end = ((i+1)*numEpisodes)*popSize
+            
+            results[trial,batch_start:batch_end] = np.array(evaluate.batchReturn)
+    
+    average_results = np.average(np.array(results), axis=0)
+    std_results = np.std(np.array(results), axis=0)
+    maximumEpisodes = average_results.shape[0]
+    max_avg = np.max(average_results)
+    
+    plt.errorbar(np.array([i for i in range(maximumEpisodes)]), average_results, std_results,fmt = 'o', marker='.', ecolor='aqua')
+    plt.grid(True)
+    plt.axhline(max_avg)
+    plt.text(0, max_avg, "max: "+str(round(max_avg,2)),fontsize=15, backgroundcolor='w')
+    
+    plt_name = "cem_gridworld"
+
+    now = datetime.now()
+    param_string = "_numTrials_"+str(numTrials)+"_numIter_" \
+        + str(numIterations) + "_popSize_" +str(popSize)
+    dt_string = now.strftime("_t_%H_%M")
+    
+    plt_name+= param_string
+    plt_name+= dt_string
+    print("plt_name=", plt_name)
+    plt_path = "images/"+plt_name + ".png"
+
+    plt.savefig(plt_path,dpi=200)
+    plt.show()
+
+    np.save("data/"+"results_"+plt_name, results)
+    np.save("data/"+"average_results_"+plt_name, average_results)
+    np.save("data/"+"std_results_"+plt_name, std_results)
+
+def main():
+    """
+    print("hello, world")
+#    problem1() # cem-gridworld-tabular_softmax
+#    problem2() # fchc-gridworld-tabular_softmax
+#    problem3() # ga-gridworld-tabular_softmax
+
+#    problem4() # cem-cartpole-softmax_theta_phi
+#    problem5() # fchc-cartpole-softmax_theta_phi
+    problem6() # ga-cartpole-softmax_theta_phi
+    
+#    env = Cartpole()
+#    evaluate_cartpole = EvaluateCartpole()
+    """
+
+#    size = len(average_ga_gridworld)
+#    max_episodes = min(8000,size)
+#    average = average_ga_gridworld[:max_episodes]
+#    std = std_ga_gridworld[:max_episodes]
+#    max_average = np.max(average)
+#        
+#    #plot
+#    plt.errorbar(np.array([i for i in range(max_episodes)]), average, std, marker='.', ecolor='aqua')
+#    plt.grid(True)
+#    plt.axhline(max_average)
+#    plt.text(0, max_average, str(round(max_average,2)),fontsize=10, backgroundcolor='w')
+#    plt.savefig("images/average_ga_gridworld"+".png",dpi=200)
+#    plt.show()
+#
+##    """
+
+if __name__ == "__main__":
+    main()
